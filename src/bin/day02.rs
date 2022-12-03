@@ -1,24 +1,32 @@
-enum Result {
+use std::str::FromStr;
+use Move::*;
+use Outcome::*;
+
+enum Outcome {
     Win,
     Lose,
     Draw,
 }
 
-impl Result {
+impl Outcome {
     fn points(self: &Self) -> u32 {
         match self {
-            Self::Win => 6,
-            Self::Draw => 3,
-            Self::Lose => 0,
+            Win => 6,
+            Draw => 3,
+            Lose => 0,
         }
     }
+}
 
-    fn from_char(c: char) -> Self {
-        match c {
-            'X' => Self::Lose,
-            'Y' => Self::Draw,
-            'Z' => Self::Win,
-            _ => unimplemented!(),
+impl FromStr for Outcome {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "X" => Ok(Lose),
+            "Y" => Ok(Draw),
+            "Z" => Ok(Win),
+            _ => Err(()),
         }
     }
 }
@@ -33,36 +41,40 @@ enum Move {
 impl Move {
     fn points(self: &Self) -> u32 {
         match self {
-            Self::Rock => 1,
-            Self::Paper => 2,
-            Self::Scissors => 3,
+            Rock => 1,
+            Paper => 2,
+            Scissors => 3,
         }
     }
 
     fn defeats(self: &Self) -> Self {
         match self {
-            Self::Rock => Self::Scissors,
-            Self::Paper => Self::Rock,
-            Self::Scissors => Self::Paper,
+            Rock => Self::Scissors,
+            Paper => Self::Rock,
+            Scissors => Self::Paper,
         }
     }
 
-    fn against(self: &Self, opponent: &Self) -> Result {
+    fn against(self: &Self, opponent: &Self) -> Outcome {
         if self.defeats() == *opponent {
-            Result::Win
+            Win
         } else if opponent.defeats() == *self {
-            Result::Lose
+            Lose
         } else {
-            Result::Draw
+            Draw
         }
     }
+}
 
-    fn from_char(c: char) -> Self {
-        match c {
-            'A' | 'X' => Self::Rock,
-            'B' | 'Y' => Self::Paper,
-            'C' | 'Z' => Self::Scissors,
-            _ => unimplemented!(),
+impl FromStr for Move {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "A" | "X" => Ok(Rock),
+            "B" | "Y" => Ok(Paper),
+            "C" | "Z" => Ok(Scissors),
+            _ => Err(()),
         }
     }
 }
@@ -71,8 +83,8 @@ fn one(input: &str) -> u32 {
     input
         .lines()
         .map(|line| {
-            let their_move = Move::from_char(line.chars().nth(0).unwrap());
-            let our_move = Move::from_char(line.chars().nth(2).unwrap());
+            let their_move = line[0..1].parse().unwrap();
+            let our_move: Move = line[2..3].parse().unwrap();
             our_move.points() + our_move.against(&their_move).points()
         })
         .sum()
@@ -82,12 +94,12 @@ fn two(input: &str) -> u32 {
     input
         .lines()
         .map(|line| {
-            let their_move = Move::from_char(line.chars().nth(0).unwrap());
-            let result = Result::from_char(line.chars().nth(2).unwrap());
+            let their_move: Move = line[0..1].parse().unwrap();
+            let result = line[2..3].parse().unwrap();
             let our_move = match result {
-                Result::Win => their_move.defeats().defeats(),
-                Result::Lose => their_move.defeats(),
-                Result::Draw => their_move.clone(),
+                Win => their_move.defeats().defeats(),
+                Lose => their_move.defeats(),
+                Draw => their_move.clone(),
             };
             our_move.points() + result.points()
         })
