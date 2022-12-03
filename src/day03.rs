@@ -1,6 +1,6 @@
 use std::{iter::Skip, iter::Take, str::Chars};
 
-fn half(s: &str) -> (Take<Chars<'_>>, Skip<Chars<'_>>) {
+fn halve(s: &str) -> (Take<Chars<'_>>, Skip<Chars<'_>>) {
     let half = s.len() / 2;
     let cs = s.chars();
     (cs.clone().take(half), cs.skip(half))
@@ -18,10 +18,9 @@ fn one(input: &str) -> u32 {
     input
         .lines()
         .map(|line| {
-            let (mut start, end) = half(line);
-            let end: Vec<_> = end.collect();
-            let c = start.find(|c| end.contains(c)).unwrap();
-            c
+            let (mut start, end) = halve(line);
+            let end: String = end.collect();
+            start.find(|c| end.contains(*c)).unwrap()
         })
         .map(priority)
         .sum()
@@ -30,12 +29,6 @@ fn one(input: &str) -> u32 {
 fn two(input: &str) -> u32 {
     input
         .lines()
-        // .map(|line| {
-        //     let (mut start, end) = half(line);
-        //     let end: Vec<_> = end.collect();
-        //     let c = start.find(|c| end.contains(c)).unwrap();
-        //     c
-        // })
         .array_chunks()
         .map(|[one, two, three]| {
             one.chars()
