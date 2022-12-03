@@ -49,9 +49,9 @@ impl Move {
 
     fn defeats(self: &Self) -> Self {
         match self {
-            Rock => Self::Scissors,
-            Paper => Self::Rock,
-            Scissors => Self::Paper,
+            Rock => Scissors,
+            Paper => Rock,
+            Scissors => Paper,
         }
     }
 
