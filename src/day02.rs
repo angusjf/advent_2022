@@ -59,12 +59,9 @@ impl Move {
 
     fn from_char(c: char) -> Self {
         match c {
-            'A' => Self::Rock,
-            'X' => Self::Rock,
-            'B' => Self::Paper,
-            'Y' => Self::Paper,
-            'C' => Self::Scissors,
-            'Z' => Self::Scissors,
+            'A' | 'X' => Self::Rock,
+            'B' | 'Y' => Self::Paper,
+            'C' | 'Z' => Self::Scissors,
             _ => unimplemented!(),
         }
     }
