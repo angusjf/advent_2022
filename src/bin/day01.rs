@@ -35,6 +35,20 @@ fn two(input: &str) -> u32 {
     sums.iter().rev().take(3).sum()
 }
 
-pub fn solve(input: &str) -> String {
-    two(input).to_string()
+fn main() {
+    println!("{}", one(include_str!("input01.txt")));
+    println!("{}", two(include_str!("input01.txt")));
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn one() {
+        assert_eq!(crate::one(include_str!("test01.txt")), 24000);
+    }
+
+    #[test]
+    fn two() {
+        assert_eq!(crate::two(include_str!("test01.txt")), 45000);
+    }
 }

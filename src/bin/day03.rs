@@ -1,3 +1,5 @@
+#![feature(iter_array_chunks)]
+
 use std::{iter::Skip, iter::Take, str::Chars};
 
 fn halve(s: &str) -> (Take<Chars<'_>>, Skip<Chars<'_>>) {
@@ -39,6 +41,20 @@ fn two(input: &str) -> u32 {
         .sum()
 }
 
-pub fn solve(input: &str) -> String {
-    two(input).to_string()
+fn main() {
+    println!("{}", one(include_str!("input03.txt")));
+    println!("{}", two(include_str!("input03.txt")));
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn one() {
+        assert_eq!(crate::one(include_str!("test03.txt")), 157);
+    }
+
+    #[test]
+    fn two() {
+        assert_eq!(crate::two(include_str!("test03.txt")), 70);
+    }
 }
