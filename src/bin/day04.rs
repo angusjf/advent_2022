@@ -18,13 +18,9 @@ fn ranges(line: &str) -> (Range<u32>, Range<u32>) {
 fn one(input: &str) -> u32 {
     input
         .lines()
-        .map(|line| {
-            let (a, b) = ranges(line);
-            if a.clone().all(|a| b.contains(&a)) || b.clone().all(|b| a.contains(&b)) {
-                1
-            } else {
-                0
-            }
+        .map(ranges)
+        .map(|(a, b)| {
+            (a.clone().all(|a| b.contains(&a)) || b.clone().all(|b| a.contains(&b))) as u32
         })
         .sum()
 }
@@ -32,13 +28,9 @@ fn one(input: &str) -> u32 {
 fn two(input: &str) -> u32 {
     input
         .lines()
-        .map(|line| {
-            let (a, b) = ranges(line);
-            if a.clone().any(|a| b.contains(&a)) || b.clone().any(|b| a.contains(&b)) {
-                1
-            } else {
-                0
-            }
+        .map(ranges)
+        .map(|(a, b)| {
+            (a.clone().any(|a| b.contains(&a)) || b.clone().any(|b| a.contains(&b))) as u32
         })
         .sum()
 }
