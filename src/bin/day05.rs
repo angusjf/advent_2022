@@ -1,45 +1,44 @@
 use itertools::*;
 
-fn one(input: &str) -> String {
-    let line_len = input.clone().lines().next().unwrap().len();
-    let n = (line_len + 1) / 4;
-    let mut stacks: Vec<Vec<char>> = Vec::with_capacity(n);
-    for _ in 0..n {
-        stacks.push(vec![]);
-    }
-    dbg!(&stacks);
-    for line in input.lines() {
-        dbg!(&line);
-        let s = line.chars().nth(1).unwrap();
-        if s.is_digit(10) {
-            break;
-        }
+fn parse_stacks(input: &str) -> Vec<Vec<char>> {
+    let mut stacks = vec![vec![]; (input.clone().lines().next().unwrap().len() + 1) / 4];
+    input
+        .lines()
+        .take_while(|line| !line.starts_with(" 1"))
+        .for_each(|line| {
+            line.chars()
+                .skip(1)
+                .step_by(4)
+                .enumerate()
+                .for_each(|(i, c)| {
+                    if c != ' ' {
+                        stacks[i].insert(0, c);
+                    }
+                });
+        });
+    stacks
+}
 
-        for i in (1..line.len()).step_by(4) {
-            let c = line.chars().nth(i).unwrap();
-            if c != ' ' {
-                stacks[(i - 1) / 4].push(c);
-            }
-        }
-    }
-    for i in 0..n {
-        stacks[i].reverse();
-    }
-    dbg!(&stacks);
+fn parse_procedure<'a>(input: &'a str) -> impl Iterator<Item = (usize, usize, usize)> + 'a {
     input
         .lines()
         .filter(|line| line.starts_with("move"))
-        .for_each(|line| {
-            let (_move, n, _from, a, _to, b) = line.split(" ").collect_tuple().unwrap();
-            let (n, a, b): (u32, u32, u32) =
-                (n.parse().unwrap(), a.parse().unwrap(), b.parse().unwrap());
-            for _ in 0..n {
-                let c = stacks[a as usize - 1].pop().unwrap();
-                stacks[b as usize - 1].push(c);
-            }
-        });
-    dbg!(&stacks);
+        .map(|line| {
+            line.split(" ")
+                .filter_map(|n| n.parse().ok())
+                .collect_tuple()
+                .unwrap()
+        })
+}
 
+fn one(input: &str) -> String {
+    let mut stacks = parse_stacks(input);
+    parse_procedure(input).for_each(|(n, a, b)| {
+        for _ in 0..n {
+            let c = stacks[a - 1].pop().unwrap();
+            stacks[b - 1].push(c);
+        }
+    });
     stacks
         .iter()
         .map(|stack| stack.iter().last().unwrap())
@@ -47,50 +46,12 @@ fn one(input: &str) -> String {
 }
 
 fn two(input: &str) -> String {
-    let line_len = input.clone().lines().next().unwrap().len();
-    let n = (line_len + 1) / 4;
-    let mut stacks: Vec<Vec<char>> = Vec::with_capacity(n);
-    for _ in 0..n {
-        stacks.push(vec![]);
-    }
-    dbg!(&stacks);
-    for line in input.lines() {
-        dbg!(&line);
-        let s = line.chars().nth(1).unwrap();
-        if s.is_digit(10) {
-            break;
-        }
-
-        for i in (1..line.len()).step_by(4) {
-            let c = line.chars().nth(i).unwrap();
-            if c != ' ' {
-                stacks[(i - 1) / 4].push(c);
-            }
-        }
-    }
-    for i in 0..n {
-        stacks[i].reverse();
-    }
-    dbg!(&stacks);
-    input
-        .lines()
-        .filter(|line| line.starts_with("move"))
-        .for_each(|line| {
-            let (_move, n, _from, a, _to, b) = line.split(" ").collect_tuple().unwrap();
-            let (n, a, b): (u32, u32, u32) =
-                (n.parse().unwrap(), a.parse().unwrap(), b.parse().unwrap());
-            let mut xs = vec![];
-            for _ in 0..n {
-                let c = stacks[a as usize - 1].pop().unwrap();
-                xs.push(c);
-            }
-            for _ in 0..n {
-                let c = xs.pop().unwrap();
-                stacks[b as usize - 1].push(c);
-            }
-        });
-    dbg!(&stacks);
-
+    let mut stacks = parse_stacks(input);
+    parse_procedure(input).for_each(|(n, a, b): (_, usize, _)| {
+        let at = stacks[a - 1].len() - n;
+        let mut cs = stacks[a - 1].split_off(at);
+        stacks[b - 1].append(&mut cs);
+    });
     stacks
         .iter()
         .map(|stack| stack.iter().last().unwrap())
@@ -107,10 +68,12 @@ mod tests {
     #[test]
     fn one() {
         assert_eq!(crate::one(include_str!("test05.txt")), "CMZ");
+        assert_eq!(crate::one(include_str!("input05.txt")), "SPFMVDTZT");
     }
 
     #[test]
     fn two() {
         assert_eq!(crate::two(include_str!("test05.txt")), "MCD");
+        assert_eq!(crate::two(include_str!("input05.txt")), "ZFSJBPRFP");
     }
 }
