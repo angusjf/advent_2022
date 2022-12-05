@@ -1,5 +1,3 @@
-module Main where
-
 import Data.List
 import Data.Sequence hiding (null, splitAt, filter, reverse)
 import Data.Foldable
