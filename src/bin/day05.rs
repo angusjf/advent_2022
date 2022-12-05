@@ -2,8 +2,7 @@ use itertools::*;
 use std::collections::LinkedList;
 
 fn parse_stacks(input: &str) -> Vec<LinkedList<char>> {
-    let mut stacks =
-        vec![LinkedList::<char>::new(); (input.clone().lines().next().unwrap().len() + 1) / 4];
+    let mut stacks = vec![LinkedList::<char>::new(); (input.lines().next().unwrap().len() + 1) / 4];
     input
         .lines()
         .take_while(|line| !line.starts_with(" 1"))
@@ -35,7 +34,6 @@ fn parse_procedure<'a>(input: &'a str) -> impl Iterator<Item = (usize, usize, us
 
 fn one(input: &str) -> String {
     let mut stacks = parse_stacks(input);
-    dbg!(&stacks);
     parse_procedure(input).for_each(|(n, a, b)| {
         for _ in 0..n {
             let c = stacks[a - 1].pop_back().unwrap();
@@ -47,7 +45,7 @@ fn one(input: &str) -> String {
 
 fn two(input: &str) -> String {
     let mut stacks = parse_stacks(input);
-    parse_procedure(input).for_each(|(n, a, b): (_, usize, _)| {
+    parse_procedure(input).for_each(|(n, a, b)| {
         let at = stacks[a - 1].len() - n;
         let mut cs = stacks[a - 1].split_off(at);
         stacks[b - 1].append(&mut cs);
