@@ -2,7 +2,7 @@ use itertools::*;
 
 fn solve(input: &str, window: usize) -> usize {
     (0..input.len())
-        .find(|i| input[*i..window].chars().all_unique())
+        .find(|i| input[*i..*i + window].chars().all_unique())
         .unwrap()
         + window
 }
