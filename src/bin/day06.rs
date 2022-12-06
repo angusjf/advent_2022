@@ -1,10 +1,12 @@
 use itertools::*;
 
-fn solve(input: &str, window: usize) -> usize {
-    (0..input.len())
-        .find(|i| input[*i..*i + window].chars().all_unique())
+fn solve(input: &str, l: usize) -> usize {
+    &input
+        .as_bytes()
+        .windows(l)
+        .position(|window| window.iter().all_unique())
         .unwrap()
-        + window
+        + l
 }
 
 fn one(input: &str) -> usize {
