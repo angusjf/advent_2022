@@ -48,68 +48,56 @@ fn create_tree(cmds: &Vec<Cmd>) -> Vec<Node> {
     let mut next_id = 1;
     let mut cursor = 0;
 
-    let mut i = 0;
-
-    loop {
-        if i == cmds.len() {
-            break;
-        }
-        match &cmds[i] {
-            Cd(dir) => {
-                if dir == "/" {
-                    cursor = 0;
-                } else if dir == ".." {
-                    cursor = nodes
-                        .iter()
-                        .find(|n| n.id == cursor)
-                        .unwrap()
-                        .parent
-                        .unwrap();
-                } else {
-                    let sub = Node {
-                        name: dir,
-                        children: vec![],
-                        parent: Some(cursor),
-                        data: None,
-                        id: next_id,
-                    };
-
-                    nodes
-                        .iter_mut()
-                        .find(|n| n.id == cursor)
-                        .unwrap()
-                        .children
-                        .push(next_id);
-
-                    cursor = next_id;
-
-                    next_id = next_id + 1;
-
-                    nodes.push(sub);
-                }
-            }
-            Ls => {}
-            Dir(_) => {}
-            File(size, name) => {
-                let file = Node {
-                    name,
-                    children: vec![],
-                    parent: Some(cursor),
-                    data: Some(*size),
-                    id: next_id,
-                };
-                nodes.push(file);
+    cmds.iter().for_each(|cmd| match cmd {
+        Cd(dir) => {
+            if dir == "/" {
+                cursor = 0;
+            } else if dir == ".." {
+                cursor = nodes
+                    .iter()
+                    .find(|n| n.id == cursor)
+                    .unwrap()
+                    .parent
+                    .unwrap();
+            } else {
                 nodes
                     .iter_mut()
                     .find(|n| n.id == cursor)
                     .unwrap()
                     .children
                     .push(next_id);
+
+                nodes.push(Node {
+                    name: dir,
+                    children: vec![],
+                    parent: Some(cursor),
+                    data: None,
+                    id: next_id,
+                });
+                cursor = next_id;
+
                 next_id = next_id + 1;
             }
         }
-        i = i + 1;
-    }
+        Ls => {}
+        Dir(_) => {}
+        File(size, name) => {
+            nodes.push(Node {
+                name,
+                children: vec![],
+                parent: Some(cursor),
+                data: Some(*size),
+                id: next_id,
+            });
+            nodes
+                .iter_mut()
+                .find(|n| n.id == cursor)
+                .unwrap()
+                .children
+                .push(next_id);
+            next_id += 1;
+        }
+    });
 
     nodes
 }
