@@ -19,8 +19,8 @@ struct Node<'a> {
     id: u32,
 }
 
-fn one(input: &str) -> u64 {
-    let cmds: Vec<_> = input
+fn parse_cmds(input: &str) -> Vec<Cmd> {
+    input
         .lines()
         .map(|line| {
             if line.starts_with("$ ls") {
@@ -34,24 +34,24 @@ fn one(input: &str) -> u64 {
                 File(size.parse().unwrap(), name.to_string())
             }
         })
-        .collect();
+        .collect()
+}
 
-    let mut nodes = vec![];
-    let mut fs = Node {
+fn create_tree(cmds: &Vec<Cmd>) -> Vec<Node> {
+    let mut nodes = vec![Node {
         name: "/",
         children: vec![],
         parent: None,
         data: None,
         id: 0,
-    };
-    nodes.push(fs);
+    }];
     let mut next_id = 1;
     let mut cursor = 0;
 
     let mut i = 0;
 
     loop {
-        if i >= cmds.len() - 1 {
+        if i == cmds.len() {
             break;
         }
         match &cmds[i] {
@@ -111,29 +111,7 @@ fn one(input: &str) -> u64 {
         i = i + 1;
     }
 
-    println!("{:?}", nodes);
-
-    let mut folder_sizes = vec![];
-
-    get_folder_sizes(&nodes, 0, &mut folder_sizes);
-
-    print_tree(&nodes, 0, 0);
-
-    println!("{:?}", folder_sizes);
-
-    let total = 70000000;
-
-    let used = file_size(&nodes, 0);
-
-    let free = total - used;
-
-    let needed = 30000000 - free;
-
-    *folder_sizes
-        .iter()
-        .filter(|size| **size >= needed)
-        .min()
-        .unwrap()
+    nodes
 }
 
 fn print_tree(nodes: &Vec<Node>, id: u32, indent: usize) {
@@ -170,16 +148,6 @@ fn get_folder_sizes(nodes: &Vec<Node>, id: u32, folder_sizes: &mut Vec<u64>) {
     }
 }
 
-fn part_one(nodes: &Vec<Node>, id: u32) -> u64 {
-    let node = nodes.iter().find(|x| x.id == id).unwrap();
-    node.children
-        .iter()
-        .map(|child| part_one(nodes, *child))
-        .filter(|size| *size <= 100_000)
-        .sum::<u64>()
-        + node.data.unwrap_or_default()
-}
-
 fn file_size(nodes: &Vec<Node>, id: u32) -> u64 {
     let node = nodes.iter().find(|x| x.id == id).unwrap();
     match node.data {
@@ -195,20 +163,60 @@ fn file_size(nodes: &Vec<Node>, id: u32) -> u64 {
     }
 }
 
+fn one(input: &str) -> u64 {
+    let cmds = parse_cmds(input);
+
+    let nodes = create_tree(&cmds);
+
+    let mut folder_sizes = vec![];
+
+    get_folder_sizes(&nodes, 0, &mut folder_sizes);
+
+    folder_sizes.iter().filter(|size| **size <= 100_000).sum()
+}
+
 fn two(input: &str) -> u64 {
-    0
+    let cmds = parse_cmds(input);
+
+    let nodes = create_tree(&cmds);
+
+    println!("{:?}", nodes);
+
+    let mut folder_sizes = vec![];
+
+    get_folder_sizes(&nodes, 0, &mut folder_sizes);
+
+    let used = file_size(&nodes, 0);
+
+    print_tree(&nodes, 0, 0);
+
+    println!("{:?}", folder_sizes);
+
+    let free = 70000000 - used;
+
+    let needed = 30000000 - free;
+
+    *folder_sizes
+        .iter()
+        .filter(|size| **size >= needed)
+        .min()
+        .unwrap()
 }
 
 fn main() {
-    // println!("{:?}", one(include_str!("test07.txt")));
     println!("{:?}", one(include_str!("input07.txt")));
-    // println!("{:?}", two(include_str!("input07.txt")));
+    println!("{:?}", two(include_str!("input07.txt")));
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn one() {
-        // assert_eq!(crate::one(include_str!("test07.txt")), vec![]);
+        assert_eq!(crate::one(include_str!("test07.txt")), 95437);
+    }
+
+    #[test]
+    fn two() {
+        assert_eq!(crate::two(include_str!("test07.txt")), 24933642);
     }
 }
