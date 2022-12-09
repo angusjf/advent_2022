@@ -1,5 +1,3 @@
-//use itertools::*;
-use std::cmp::*;
 use std::collections::*;
 
 fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
@@ -54,20 +52,9 @@ fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
     }
 }
 
-fn one(input: &str) -> usize {
+fn solve(input: &str, n_knots: usize) -> usize {
     let mut visited: HashSet<(i32, i32)> = HashSet::new();
-    let mut knots = vec![
-        (0, 0),
-        (0, 0),
-        (0, 0),
-        (0, 0),
-        (0, 0),
-        (0, 0),
-        (0, 0),
-        (0, 0),
-        (0, 0),
-        (0, 0),
-    ];
+    let mut knots = vec![(0, 0); n_knots];
     visited.insert((0, 0));
     input
         .lines()
@@ -94,42 +81,25 @@ fn one(input: &str) -> usize {
                     _ => unimplemented!(),
                 }
 
-                for i in 0..9 {
+                for i in 0..(n_knots - 1) {
                     let head = knots[i];
                     let mut tail = knots[i + 1];
                     keep_up(head.0, head.1, &mut tail.0, &mut tail.1);
                     knots[i + 1].0 = tail.0;
                     knots[i + 1].1 = tail.1;
                 }
-                visited.insert((knots[9].0, knots[9].1));
+                visited.insert(knots[n_knots - 1]);
             }
         });
     visited.len()
 }
 
-fn print_grid(h_x: i32, h_y: i32, t_x: i32, t_y: i32, visited: &HashSet<(i32, i32)>) {
-    let s = 30;
-    for y in -s..=s {
-        for x in -s..s {
-            if (x, y) == (t_x, t_y) {
-                print!("T");
-            } else if (x, y) == (h_x, h_y) {
-                print!("H");
-            } else if (x, y) == (0, 0) {
-                print!("s");
-            } else if visited.contains(&(x, y)) {
-                print!("#");
-            } else {
-                print!(".");
-            }
-        }
-        println!();
-    }
-    println!();
+fn one(input: &str) -> usize {
+    solve(input, 2)
 }
 
 fn two(input: &str) -> usize {
-    0
+    solve(input, 10)
 }
 
 fn main() {
@@ -141,11 +111,11 @@ fn main() {
 mod tests {
     #[test]
     fn one() {
-        assert_eq!(crate::one(include_str!("test09.txt")), 10013);
+        assert_eq!(crate::one(include_str!("input09.txt")), 5695);
     }
 
     #[test]
     fn two() {
-        assert_eq!(crate::two(include_str!("test09.txt")), 8);
+        assert_eq!(crate::two(include_str!("input09.txt")), 2434);
     }
 }
