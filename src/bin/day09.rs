@@ -56,7 +56,18 @@ fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
 
 fn one(input: &str) -> usize {
     let mut visited: HashSet<(i32, i32)> = HashSet::new();
-    let mut knots = vec![(0, 0), (0, 0)];
+    let mut knots = vec![
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+    ];
     visited.insert((0, 0));
     input
         .lines()
@@ -83,12 +94,14 @@ fn one(input: &str) -> usize {
                     _ => unimplemented!(),
                 }
 
-                let head = knots[0];
-                let mut tail = knots[1];
-                keep_up(head.0, head.1, &mut tail.0, &mut tail.1);
-                knots[1].0 = tail.0;
-                knots[1].1 = tail.1;
-                visited.insert((knots[1].0, knots[1].1));
+                for i in 0..9 {
+                    let head = knots[i];
+                    let mut tail = knots[i + 1];
+                    keep_up(head.0, head.1, &mut tail.0, &mut tail.1);
+                    knots[i + 1].0 = tail.0;
+                    knots[i + 1].1 = tail.1;
+                }
+                visited.insert((knots[9].0, knots[9].1));
             }
         });
     visited.len()
