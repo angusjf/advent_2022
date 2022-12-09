@@ -1,8 +1,8 @@
-use std::collections::*;
+use std::collections::HashSet;
 
-fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
-    let dx = h_x - *t_x;
-    let dy = h_y - *t_y;
+fn keep_up((hx, hy): (i32, i32), (tx, ty): (i32, i32)) -> (i32, i32) {
+    let dx = hx - tx;
+    let dy = hy - ty;
     let touching = dx.abs() < 2 && dy.abs() < 2;
 
     // If the head is ever two steps directly
@@ -10,20 +10,24 @@ fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
     // the tail must also move one step in that direction
     // so it remains close enough:
     if !touching {
-        let same_row = h_x == *t_x;
-        let same_column = h_y == *t_y;
+        let same_row = hx == tx;
+        let same_column = hy == ty;
 
         if same_row {
             if dy > 1 {
-                *t_y += 1;
+                (tx, ty + 1)
             } else if dy < -1 {
-                *t_y -= 1;
+                (tx, ty - 1)
+            } else {
+                (tx, ty)
             }
         } else if same_column {
             if dx > 1 {
-                *t_x += 1;
+                (tx + 1, ty)
             } else if dx < -1 {
-                *t_x -= 1;
+                (tx - 1, ty)
+            } else {
+                (tx, ty)
             }
         } else {
             // Otherwise, if the head and tail aren't touching
@@ -31,24 +35,27 @@ fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
             // the tail always moves one step diagonally to keep up:
             if dy > 0 {
                 if dx > 0 {
-                    *t_x += 1;
-                    *t_y += 1;
-                }
-                if dx < 0 {
-                    *t_x -= 1;
-                    *t_y += 1;
+                    (tx + 1, ty + 1)
+                } else if dx < 0 {
+                    (tx - 1, ty + 1)
+                } else {
+                    unreachable!();
                 }
             } else if dy < 0 {
                 if dx > 0 {
-                    *t_x += 1;
-                    *t_y -= 1;
+                    (tx + 1, ty - 1)
+                } else if dx < 0 {
+                    (tx - 1, ty - 1)
+                } else {
+                    unreachable!();
                 }
-                if dx < 0 {
-                    *t_x -= 1;
-                    *t_y -= 1;
-                }
+            } else {
+                dbg!(dx, dy);
+                unreachable!();
             }
         }
+    } else {
+        (tx, ty)
     }
 }
 
@@ -83,10 +90,10 @@ fn solve(input: &str, n_knots: usize) -> usize {
 
                 for i in 0..(n_knots - 1) {
                     let head = knots[i];
-                    let mut tail = knots[i + 1];
-                    keep_up(head.0, head.1, &mut tail.0, &mut tail.1);
-                    knots[i + 1].0 = tail.0;
-                    knots[i + 1].1 = tail.1;
+                    let tail = knots[i + 1];
+                    let new = keep_up(head, tail);
+                    knots[i + 1].0 = new.0;
+                    knots[i + 1].1 = new.1;
                 }
                 visited.insert(knots[n_knots - 1]);
             }
