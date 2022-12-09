@@ -88,13 +88,11 @@ fn solve(input: &str, n_knots: usize) -> usize {
                     _ => unimplemented!(),
                 }
 
-                for i in 0..(n_knots - 1) {
+                (0..n_knots - 1).for_each(|i| {
                     let head = knots[i];
                     let tail = knots[i + 1];
-                    let new = keep_up(head, tail);
-                    knots[i + 1].0 = new.0;
-                    knots[i + 1].1 = new.1;
-                }
+                    knots[i + 1] = keep_up(head, tail);
+                });
                 visited.insert(knots[n_knots - 1]);
             }
         });
