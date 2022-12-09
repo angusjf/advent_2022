@@ -40,7 +40,7 @@ def one(input):
     visited.add((0, 0))
     for line in input:
             c = line[0]
-            n = int(line[2])
+            n = int(line[2:])
             for _ in range(0, n):
                 if c == 'U':
                     h_y -= 1

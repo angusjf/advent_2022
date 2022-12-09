@@ -16,14 +16,12 @@ fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
         let same_column = h_y == *t_y;
 
         if same_row {
-            assert!(dy.abs() == 2);
             if dy > 1 {
                 *t_y += 1;
             } else if dy < -1 {
                 *t_y -= 1;
             }
         } else if same_column {
-            assert!(dx.abs() == 2);
             if dx > 1 {
                 *t_x += 1;
             } else if dx < -1 {
@@ -33,7 +31,6 @@ fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
             // Otherwise, if the head and tail aren't touching
             // and aren't in the same row or column,
             // the tail always moves one step diagonally to keep up:
-            assert!(dy.abs() == 2 || dx.abs() == 2);
             if dy > 0 {
                 if dx > 0 {
                     *t_x += 1;
@@ -54,14 +51,6 @@ fn keep_up(h_x: i32, h_y: i32, t_x: &mut i32, t_y: &mut i32) {
                 }
             }
         }
-    } else {
-        dbg!(dx, dy);
-        assert!(
-            (dy.abs() == 1 && dx.abs() == 1)
-                || (dy.abs() == 1 && dx == 0)
-                || (dx.abs() == 1 && dy == 0)
-                || dx == 0 && dy == 0
-        );
     }
 }
 
@@ -73,7 +62,7 @@ fn one(input: &str) -> usize {
         .lines()
         .map(|line| {
             let c = line.chars().nth(0).unwrap();
-            let n: i32 = line[2..3].parse().unwrap();
+            let n: i32 = line[2..].parse().unwrap();
             (c, n)
         })
         .for_each(|(c, n)| {
@@ -96,9 +85,10 @@ fn one(input: &str) -> usize {
 
                 let head = knots[0];
                 let mut tail = knots[1];
-                keep_up(head.0, tail.1, &mut tail.0, &mut tail.1);
-                visited.insert(knots[1]);
-                // print_grid(h_x, h_y, t_x, t_y, &visited);
+                keep_up(head.0, head.1, &mut tail.0, &mut tail.1);
+                knots[1].0 = tail.0;
+                knots[1].1 = tail.1;
+                visited.insert((knots[1].0, knots[1].1));
             }
         });
     visited.len()
