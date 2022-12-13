@@ -2,7 +2,7 @@ use core::fmt;
 use itertools::*;
 use std::cmp::Ordering;
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Ord, PartialEq, Eq, Clone)]
 enum Nest {
     Cell(u8),
     Nil,
@@ -41,25 +41,6 @@ impl PartialOrd for Nest {
                 Some(Less) => Some(Less),
                 Some(Greater) => Some(Greater),
                 _ => box_a.1.partial_cmp(&box_b.1),
-            },
-        }
-    }
-}
-
-impl Ord for Nest {
-    fn cmp(&self, other: &Self) -> Ordering {
-        use std::cmp::Ordering::*;
-        match (self, other) {
-            (Cell(a), Cell(b)) => a.cmp(b),
-            (Nil, Nil) => Equal,
-            (_, Nil) => Greater,
-            (Nil, _) => Less,
-            (Cell(a), b) => (Pair(Box::new((Cell(*a), Nil)))).cmp(b),
-            (a, Cell(b)) => a.cmp(&Pair(Box::new((Cell(*b), Nil)))),
-            (Pair(box_a), Pair(box_b)) => match box_a.0.cmp(&box_b.0) {
-                Less => Less,
-                Greater => Greater,
-                Equal => box_a.1.cmp(&box_b.1),
             },
         }
     }
@@ -135,7 +116,6 @@ fn two(input: &str) -> usize {
 }
 
 fn main() {
-    // println!("{:?}", one(include_str!("input13.txt")));
     println!("{:?}", one(include_str!("test13.txt")));
     println!("{:?}", two(include_str!("test13.txt")));
 }
