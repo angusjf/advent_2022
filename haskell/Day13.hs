@@ -79,19 +79,3 @@ cmp (Pair a as) (Pair b bs) =
         GT -> GT
         EQ -> cmp as bs
 
--- cmp :: Nest -> Nest -> [(Nest, Nest, Bool)]
-
--- cmp (Cell a) (Cell b) = [(Cell a, Cell b, a <= b)]
-
--- cmp (Pair a as) (Pair b bs) = (cmp a b) ++ cmp as bs
-
--- cmp Nil Nil = [(Nil, Nil, True)]
-
--- cmp x Nil = [(x, Nil, False)]
-
--- cmp Nil x = [(Nil, x, True)]
-
--- cmp (Cell a) b = cmp (Pair (Cell a) Nil) b
-
--- cmp a (Cell b) = cmp a (Pair (Cell b) Nil)
-
