@@ -1,81 +1,56 @@
 import Data.List
-import Data.Foldable
 import Data.Char
 
-main = interact $ solve . map parse . concatMap (take 2) . splitEvery 3 . lines
+main = interact $ show . pt2
+
+pt2 :: String -> Int
+pt2 = product .
+      map fst .
+      filter ((`elem` [two, six]) . snd) .
+      zip [1..] .
+      sort .
+      (++) [two, six] .
+      map (fst . parse) .
+      concatMap (take 2) .
+      splitEvery 3 .
+      lines
+
+data Nest = Cell Int | Pair Nest Nest | Nil deriving (Show, Eq)
 
 two = Pair (Pair (Cell 2) Nil) Nil
 
 six = Pair (Pair (Cell 6) Nil) Nil
 
-solve :: [Nest] -> String
-solve xs =
-    let
-        s = zip [1..] $ sort $ [two, six] ++ xs
-        [(x, _)] = filter (\(_, x) -> x == two) s
-        [(y, _)] =  filter (\(_, x) -> x == six) s
-    in
-        show $ x * y
+parse str =
+    case str of
+        '1':'0':more -> (Cell 10, more)
+        d:more | isDigit d -> (Cell (digitToInt d), more)
+        '[':']':more ->
+            (Nil, more)
+        '[':more ->
+            parseListItems more
+
+parseListItems str =
+    case parse str of
+        (x, ']':more) -> (Pair x Nil, more)
+        (x, ',':more) -> let (xs, moremore) = parseListItems more
+                         in  (Pair x xs, moremore)
+
+instance Ord Nest where
+    compare (Cell a) (Cell b) = compare a b
+    compare Nil Nil = EQ
+    compare _ Nil = GT
+    compare Nil _ = LT
+    compare (Cell a) b = compare (Pair (Cell a) Nil) b
+    compare a (Cell b) = compare a (Pair (Cell b) Nil)
+    compare (Pair a as) (Pair b bs) =
+        case compare a b of
+            LT -> LT
+            GT -> GT
+            EQ -> compare as bs
 
 splitEvery n xs =
     case splitAt n xs of
         (start, []) -> [start]
         (start, end) -> start : splitEvery n end
-
-pair [x, y] = (x, y)
-
-data Nest = Cell Int | Pair Nest Nest | Nil deriving (Show, Eq)
-
-parse :: String -> Nest
-parse str =
-    case runP str of
-        Just (n, "") -> n
-        Just (n, x) -> error x
-        Nothing -> error "nothing"
-
-numbers = map show [1..10]
-
-runP :: String -> Maybe (Nest, String)
-runP str =
-    case str of
-        '1':'0':more -> Just $ (Cell 10, more)
-        '0':more -> Just $ (Cell 0, more)
-        '1':more -> Just $ (Cell 1, more)
-        '2':more -> Just $ (Cell 2, more)
-        '3':more -> Just $ (Cell 3, more)
-        '4':more -> Just $ (Cell 4, more)
-        '5':more -> Just $ (Cell 5, more)
-        '6':more -> Just $ (Cell 6, more)
-        '7':more -> Just $ (Cell 7, more)
-        '8':more -> Just $ (Cell 8, more)
-        '9':more -> Just $ (Cell 9, more)
-        '[':']':more ->
-            Just (Nil, more)
-        '[':more ->
-            parseListItems more
-
-parseListItems str =
-    case runP str of
-        Just (x, ']':more) ->
-            Just $ (Pair x Nil, more)
-        Just (x, ',':more) ->
-            case parseListItems more of
-                Just (xs, moremore) ->
-                    Just $ (Pair x xs, moremore)
-
-instance Ord Nest where
-    compare = cmp
-
-cmp :: Nest -> Nest -> Ordering
-cmp (Cell a) (Cell b) = compare a b
-cmp Nil Nil = EQ
-cmp _ Nil = GT
-cmp Nil _ = LT
-cmp (Cell a) b = cmp (Pair (Cell a) Nil) b
-cmp a (Cell b) = cmp a (Pair (Cell b) Nil)
-cmp (Pair a as) (Pair b bs) =
-    case cmp a b of
-        LT -> LT
-        GT -> GT
-        EQ -> cmp as bs
 
