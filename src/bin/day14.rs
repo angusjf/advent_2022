@@ -18,9 +18,9 @@ fn collides_with(path: &Vec<(usize, usize)>, (x, y): &(usize, usize)) -> bool {
         .zip(path.iter().skip(1))
         .any(|((x1, y1), (x2, y2))| {
             if x1 == x2 {
-                x1 == x && ((y1..=y2).contains(&y) || (y2..=y1).contains(&y))
+                x1 == x && ((y >= y1 && y <= y2) || (y >= y2 && y <= y1))
             } else if y1 == y2 {
-                y1 == y && ((x1..=x2).contains(&x) || (x2..=x1).contains(&x))
+                y1 == y && ((x >= x1 && x <= x2) || (x >= x2 && x <= x1))
             } else {
                 unreachable!();
             }
