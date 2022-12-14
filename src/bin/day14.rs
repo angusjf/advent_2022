@@ -70,8 +70,6 @@ fn print(
 }
 
 fn one(input: &str) -> usize {
-    // let map: Vec<Vec<char>> = vec![vec![; 1000]; 1000];
-
     let paths: Vec<Vec<(usize, usize)>> = input.lines().map(parse).collect();
 
     let mut grains = HashSet::new();
@@ -100,49 +98,26 @@ fn one(input: &str) -> usize {
         }
 
         'grain: loop {
-            // print!("\x1B[2J\x1B[1;1H");
-            // print(&grain, &paths, &grains, min_x, max_x, max_y);
-            // thread::sleep(time::Duration::from_millis(40));
-
-            // if grain.1 > max_y {
-            // if grain.1 > max_y {
-            // break 'grains;
-            // }
-
-            {
-                let down = (grain.0, grain.1 + 1);
-                if valid(&down, &paths, &grains, max_y) {
-                    grain = down;
-                    continue;
-                }
+            let down = (grain.0, grain.1 + 1);
+            if valid(&down, &paths, &grains, max_y) {
+                grain = down;
+                continue;
             }
-            {
-                // let left = (grain.0 - 1, grain.1);
-                // if valid(&left, &paths, &grains) {
-                let down_left = (grain.0 - 1, grain.1 + 1);
-                if valid(&down_left, &paths, &grains, max_y) {
-                    grain = down_left;
-                    continue;
-                }
-                // }
+            let down_left = (grain.0 - 1, grain.1 + 1);
+            if valid(&down_left, &paths, &grains, max_y) {
+                grain = down_left;
+                continue;
             }
-            {
-                // let right = (grain.0 + 1, grain.1);
-                // if valid(&right, &paths, &grains) {
-                let down_right = (grain.0 + 1, grain.1 + 1);
-                if valid(&down_right, &paths, &grains, max_y) {
-                    grain = down_right;
-                    continue;
-                }
-                // }
+            let down_right = (grain.0 + 1, grain.1 + 1);
+            if valid(&down_right, &paths, &grains, max_y) {
+                grain = down_right;
+                continue;
             }
-            // check if it collides with a path
-            // check if it collides with a grain
             break 'grain;
         }
-        // print!("\x1B[2J\x1B[1;1H");
-        // print(&grain, &paths, &grains, min_x, max_x, max_y);
-        // thread::sleep(time::Duration::from_millis(20));
+        print!("\x1B[2J\x1B[1;1H"); // clear
+        print(&grain, &paths, &grains, min_x, max_x, max_y);
+        thread::sleep(time::Duration::from_millis(20));
 
         grains.insert(grain);
     }
