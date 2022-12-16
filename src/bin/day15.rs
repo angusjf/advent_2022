@@ -19,8 +19,13 @@ fn one(input: &str) -> i64 {
         .lines()
         .map(parse)
         .map(|((x, y), (beacon_x, beacon_y))| {
-            ((x, y), (beacon_x, beacon_y), (beacon_x - x).abs() + (beacon_y - y).abs())
-        }).collect();
+            (
+                (x, y),
+                (beacon_x, beacon_y),
+                (beacon_x - x).abs() + (beacon_y - y).abs(),
+            )
+        })
+        .collect();
 
     let min_x = sensors.iter().map(|((x, _), _, r)| x - r).min().unwrap();
     let max_x = sensors.iter().map(|((x, _), _, r)| x + r).max().unwrap();
@@ -32,9 +37,12 @@ fn one(input: &str) -> i64 {
     for x in min_x..max_x {
         if sensors.iter().any(|(_, beacon, _)| &(x, y) == beacon) {
             // position contains a beacon
-        } else if sensors.iter().all(
-            |sensor| distance_between_sensor_and_position_is_far_enough_away_that_it_could_contain_a_beacon(sensor, &(x, y))
-        ) {
+        } else if sensors.iter().all(|sensor| {
+            distance_between_sensor_and_position_is_far_enough_away_that_it_could_contain_a_beacon(
+                sensor,
+                &(x, y),
+            )
+        }) {
             // position could be a beacon
         } else {
             // position cannot possibly contain a beacon
@@ -45,7 +53,10 @@ fn one(input: &str) -> i64 {
     num_positions_that_cannot_contain_a_beacon
 }
 
-fn distance_between_sensor_and_position_is_far_enough_away_that_it_could_contain_a_beacon(((sensor_x, sensor_y), _, r): &((i64, i64), (i64, i64), i64), (x, y): &(i64, i64)) -> bool {
+fn distance_between_sensor_and_position_is_far_enough_away_that_it_could_contain_a_beacon(
+    ((sensor_x, sensor_y), _, r): &((i64, i64), (i64, i64), i64),
+    (x, y): &(i64, i64),
+) -> bool {
     // dbg!((sensor_x - x).abs() , (sensor_y - y).abs(), *r);
     let dist = (sensor_x - x).abs() + (sensor_y - y).abs();
     dist > *r
@@ -56,27 +67,36 @@ fn two(input: &str) -> i64 {
         .lines()
         .map(parse)
         .map(|((x, y), (beacon_x, beacon_y))| {
-            ((x, y), (beacon_x, beacon_y), (beacon_x - x).abs() + (beacon_y - y).abs())
-        }).collect();
+            (
+                (x, y),
+                (beacon_x, beacon_y),
+                (beacon_x - x).abs() + (beacon_y - y).abs(),
+            )
+        })
+        .collect();
 
     if max == 20 {
         print(&sensors);
     }
 
     for y in 0..=max {
-        let ranges: Vec<_> = sensors.iter().map(
-            |((sensor_x, sensor_y), _beacon, r)| {
+        let ranges: Vec<_> = sensors
+            .iter()
+            .map(|((sensor_x, sensor_y), _beacon, r)| {
                 let y_diff = (sensor_y - y).abs();
                 let x_diff = r - y_diff;
                 // can't be in this range
                 (sensor_x - x_diff, sensor_x + x_diff)
-            }
-        ).collect();
+            })
+            .collect();
 
         let mut x = 0;
 
         while x <= max {
-            if let Some((_min_x, max_x)) = ranges.iter().find(|(min_x, max_x)| x >= *min_x && x <= *max_x) {
+            if let Some((_min_x, max_x)) = ranges
+                .iter()
+                .find(|(min_x, max_x)| x >= *min_x && x <= *max_x)
+            {
                 println!(" -> {max_x}");
                 x = *max_x + 1;
             } else {
@@ -87,7 +107,6 @@ fn two(input: &str) -> i64 {
         println!("{y}");
     }
 
-    
     unreachable!();
 }
 
