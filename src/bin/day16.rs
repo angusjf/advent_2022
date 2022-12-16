@@ -1,7 +1,9 @@
 use itertools::*;
+use std::io::{self, Write};
+
 use std::collections::*;
 
-fn parse(line: &str) -> (&str, (u32, Vec<&str>)) {
+fn parse(line: &str) -> (&str, (i64, Vec<&str>)) {
     let mut iter = line.split(" ");
     iter.next();
     let valve = iter.next().unwrap();
@@ -16,8 +18,8 @@ fn parse(line: &str) -> (&str, (u32, Vec<&str>)) {
     (valve, (rate, leads_to))
 }
 
-fn calc_distances<'a>(valves: &'a HashMap<&'a str, (u32, Vec<&str>)>) -> HashMap<(&'a str, &'a str), u32> {
-    let mut distances: HashMap<(&str, &str), u32> = valves.iter().flat_map(|(from, (_, links_to))| {
+fn calc_distances<'a>(valves: &'a HashMap<&'a str, (i64, Vec<&str>)>) -> HashMap<(&'a str, &'a str), i64> {
+    let mut distances: HashMap<(&str, &str), i64> = valves.iter().flat_map(|(from, (_, links_to))| {
         links_to.iter().map(|to| ((*from, *to), 1))
     }).collect();
     
@@ -55,43 +57,91 @@ fn calc_distances<'a>(valves: &'a HashMap<&'a str, (u32, Vec<&str>)>) -> HashMap
     distances
 }
 
-fn one(input: &str) -> u32 {
-    let valves: HashMap<&str, (u32, Vec<&str>)> = input.lines().map(parse).collect();
+fn value(cache: &mut HashMap<(&str, i64, &str), i64>, cave: &str, open_valves: HashSet<&str>, valves: &HashMap<&str, (i64, Vec<&str>)>, mins: i64) -> i64 {
+    println!("calculating value of {cave} at {mins}");
+    let _ = std::io::stdout().flush();
+
+    if mins <= 0 {
+        return 0;
+    }
+
+    cache.insert((cave, mins, valves.iter().collect()), 0);
+
+    let already_opened = open_valves.contains(cave);
+
+    let (rate, links_to) = &valves[cave];
+
+    let value_move = links_to.iter().map(|d| value(cache, d, open_valves.clone(), &valves, mins - 1)).max().unwrap();
+
+    if already_opened  {
+
+        value_move
+
+    } else {
+        let mut open_valves_open = open_valves.clone();
+
+        open_valves_open.insert(cave);
+
+        let value_open = rate * (mins - 1) + links_to.iter().map(|d| value(cache, d, open_valves_open.clone(), &valves, mins - 2)).max().unwrap();
+
+        std::cmp::max(value_open, value_move)
+
+    }
+}
+
+const TIME: i64 = 30;
+
+fn one(input: &str) -> i64 {
+    let valves: HashMap<&str, (i64, Vec<&str>)> = input.lines().map(parse).collect();
 
     let mut cave = "AA";
 
     let mut visited: HashSet<&str> = HashSet::new();
 
-    let mut pressure_released: u32 = 0;
+    let mut pressure_released: i64 = 0;
 
     let distances = calc_distances(&valves);
 
     distances.iter().for_each(|((from, to), dist)| println!("{} -> {}: {}", from, to, dist));
 
-    for minuite in 0..30 {
+    for minuite in 1..=TIME {
         println!("starting {minuite} in cave {cave}");
 
-        pressure_released += visited.iter().map(|cave| valves[cave].0).sum::<u32>();
+        pressure_released += visited.iter().map(|cave| valves[cave].0).sum::<i64>();
 
         // NEXT
+        let (_, links_to) = &valves[cave];
 
-        let (_rate, links_to) = &valves[cave];
+        let cache = HashMap::new();
 
-        cave = links_to[0];
+        let (most_valuable_dest, its_value) =
+                links_to.
+                iter().
+                map(|dest| (dest, value(cache, dest, visited.clone(), &valves, minuite - 1)))
+                .max_by_key(|(_, value)| *value).unwrap();
 
-        visited.insert(&cave);
+        let stay_value = value(cache, cave, visited.clone(), &valves, minuite);
+
+        if its_value > stay_value {
+            println!("chosing to move to {most_valuable_dest}");
+            cave = most_valuable_dest;
+        } else {
+            println!("chosing to stay and open {cave}");
+            visited.insert(&cave);
+        }
     }
 
     pressure_released
 }
 
-fn two(input: &str) -> u32 {
+fn two(input: &str) -> i64 {
     0
 }
 
 fn main() {
-    println!("{}", one(include_str!("input16.txt")));
-    println!("{}", two(include_str!("input16.txt")));
+    // println!("{}", one(include_str!("input16.txt")));
+    println!("{}", one(include_str!("test16.txt")));
+    // println!("{}", two(include_str!("input16.txt")));
 }
 
 #[cfg(test)]
