@@ -1,16 +1,7 @@
 use std::collections::*;
 
-fn color(n: i64) -> char {
-    '#'
-    // match n % 4 {
-    //     0 => '0',
-    //     1 => '1',
-    //     2 => '2',
-    //     3 => '3',
-    //     _ => '4',
-    // }
-}
-const MAX: i64 = 10;
+const MAX: i64 = 2022;
+
 fn one(input: &str) -> i64 {
     let tet_flat = vec![(0, 0), (1, 0), (2, 0), (3, 0)];
     let tet_plus = vec![(0, 1), (1, 0), (1, 1), (1, 2), (2, 1)];
@@ -20,102 +11,85 @@ fn one(input: &str) -> i64 {
 
     let tetronimos = vec![tet_flat, tet_plus, tet_j, tet_l, tet_o];
 
-    let mut grid = HashMap::new();
+    let mut grid: HashSet<(i64, i64)> = HashSet::new();
 
-    let mut tetronimos = tetronimos.iter().cycle();
+    let mut chars = input.lines().nth(0).unwrap().chars().cycle();
 
-    let mut x = 2;
-    let mut y = 3;
-    let mut tet = tetronimos.next().unwrap();
+    for tet in tetronimos.iter().cycle().take(MAX as usize) {
+        let highest = highest_point(&grid);
+        let mut tet: Vec<_> = tet
+            .iter()
+            .map(|(x, y)| (*x + 2, *y + highest + 4))
+            .collect();
 
-    let mut rocks = 0;
+        'a: loop {
+            // print(&tet, &grid);
 
-    for c in input.chars().cycle() {
-        if MAX == 10 {
-            print(x, y, tet, &grid);
-        }
-        {
-            println!("{c}");
-            if c == '<' {
-                let possible = tet.iter().all(|(tet_x, tet_y)| {
-                    let real_x = tet_x + x;
-                    let real_y = tet_y + y;
-                    if real_x == 0 {
-                        return false;
+            match chars.next().unwrap() {
+                '<' => {
+                    if !tet
+                        .iter()
+                        .any(|(x, y)| *x == 0 || grid.contains(&(*x - 1, *y)))
+                    {
+                        tet = tet.iter().map(|(x, y)| (*x - 1, *y)).collect();
+                        // println!(" <-");
+                    } else {
+                        // println!(" |-");
                     }
-                    !grid.contains_key(&(real_x - 1, real_y))
-                });
-                if possible {
-                    x -= 1;
-                } else {
-                    println!("can't move {c}");
                 }
-            } else if c == '>' {
-                let possible = tet.iter().all(|(tet_x, tet_y)| {
-                    let real_x = tet_x + x;
-                    let real_y = tet_y + y;
-                    if real_x == 6 {
-                        return false;
+
+                '>' => {
+                    if !tet
+                        .iter()
+                        .any(|(x, y)| *x == 6 || grid.contains(&(*x + 1, *y)))
+                    {
+                        // println!(" ->");
+                        tet = tet.iter().map(|(x, y)| (*x + 1, *y)).collect();
+                    } else {
+                        // println!(" -|");
                     }
-                    !grid.contains_key(&(real_x + 1, real_y))
-                });
-                if possible {
-                    x += 1;
-                } else {
-                    println!("can't move {c}");
                 }
+
+                _ => unreachable!(),
+            }
+
+            // print(&tet, &grid);
+
+            if !tet
+                .iter()
+                .any(|(x, y)| *y == 0 || grid.contains(&(*x, *y - 1)))
+            {
+                tet = tet.iter().map(|(x, y)| (*x, *y - 1)).collect();
+
+                // println!(" |");
+                // println!(" v");
+            } else {
+                // println!(" |");
+                // println!(" –");
+
+                break 'a;
             }
         }
-        if MAX == 10 {
-            print(x, y, tet, &grid);
-        }
-        {
-            y -= 1;
 
-            let hit = tet.iter().any(|(tet_x, tet_y)| {
-                let real_x = tet_x + x;
-                let real_y = tet_y + y;
-                real_y == -1 || grid.contains_key(&(real_x, real_y))
-            });
-
-            if hit {
-                tet.iter().for_each(|(tet_x, tet_y)| {
-                    let real_x = tet_x + x;
-                    let real_y = tet_y + y;
-                    grid.insert((real_x, real_y + 1), color(rocks));
-                });
-
-                let highest_point = grid.keys().map(|(_, y)| y).max().unwrap();
-
-                tet = tetronimos.next().unwrap();
-
-                rocks += 1;
-                println!("{rocks}");
-                if rocks == MAX {
-                    break;
-                }
-
-                x = 2;
-                y = highest_point + 4;
-            }
-        }
+        tet.iter().for_each(|cell| {
+            grid.insert(*cell);
+        });
     }
 
-    y
+    highest_point(&grid) + 1
 }
 
-fn print(x: i64, y: i64, tet: &Vec<(i64, i64)>, grid: &HashMap<(i64, i64), char>) {
-    let tet: HashSet<_> = tet
-        .iter()
-        .map(|(tet_x, tet_y)| (x + tet_x, y + tet_y))
-        .collect();
+fn highest_point(grid: &HashSet<(i64, i64)>) -> i64 {
+    *grid.iter().map(|(_, y)| y).max().unwrap_or(&-1)
+}
 
-    println!("{x} {y} {:?}", tet);
-    for y in (0..y + 5).rev() {
-        print!("|");
+fn print(tet: &Vec<(i64, i64)>, grid: &HashSet<(i64, i64)>) {
+    let highest_point = highest_point(grid);
+    for y in (0..highest_point + 8).rev() {
+        print!("{:<4}|", y);
         for x in 0..7 {
-            if let Some(c) = grid.get(&(x, y)) {
-                print!("{c}");
+            if grid.contains(&(x, y)) {
+                print!("#");
             } else if tet.contains(&(x, y)) {
                 print!("@");
             } else {
@@ -125,18 +99,19 @@ fn print(x: i64, y: i64, tet: &Vec<(i64, i64)>, grid: &HashMap<(i64, i64), char>
         print!("|");
         println!();
     }
-    println!("+-------+");
+    println!("    +-------+");
+    println!();
 }
 
 fn main() {
-    println!("{}", one(include_str!("test17.txt")));
-    // println!("{}", one(include_str!("input17.txt")));
+    // println!("{}", one(include_str!("test17.txt")));
+    println!("{}", one(include_str!("input17.txt")));
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn one() {
-        assert_eq!(crate::one(include_str!("test17.txt")), 1651);
+        assert_eq!(crate::one(include_str!("test17.txt")), 3068);
     }
 }
