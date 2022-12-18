@@ -2,3 +2,4 @@
 !/haskell
 /haskell/*
 !/haskell/*.hs
+.DS_Store

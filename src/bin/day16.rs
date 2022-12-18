@@ -1,6 +1,4 @@
 use itertools::*;
-use std::io::{self, Write};
-
 use std::collections::*;
 
 fn parse(line: &str) -> (&str, (i64, Vec<&str>)) {
@@ -9,7 +7,15 @@ fn parse(line: &str) -> (&str, (i64, Vec<&str>)) {
     let valve = iter.next().unwrap();
     iter.next();
     iter.next();
-    let rate = iter.next().unwrap().strip_prefix("rate=").unwrap().strip_suffix(";").unwrap().parse().unwrap();
+    let rate = iter
+        .next()
+        .unwrap()
+        .strip_prefix("rate=")
+        .unwrap()
+        .strip_suffix(";")
+        .unwrap()
+        .parse()
+        .unwrap();
     iter.next();
     iter.next();
     iter.next();
@@ -18,117 +24,133 @@ fn parse(line: &str) -> (&str, (i64, Vec<&str>)) {
     (valve, (rate, leads_to))
 }
 
-fn calc_distances<'a>(valves: &'a HashMap<&'a str, (i64, Vec<&str>)>) -> HashMap<(&'a str, &'a str), i64> {
-    let mut distances: HashMap<(&str, &str), i64> = valves.iter().flat_map(|(from, (_, links_to))| {
-        links_to.iter().map(|to| ((*from, *to), 1))
-    }).collect();
-    
-    let combinations: HashSet<(&str, &str)> = valves.keys().flat_map(|from| valves.keys().map(|to| (*from, *to))).collect();
+const TIME: i64 = 6;
 
-    let keys = valves.keys();
-
-    for _ in 1..keys.len() {
-        combinations.iter().for_each(|(from, to)| {
-            match distances.get(&(*from, *to)) {
-                Some(_) => {}
-                None => {
-                    let dist = keys.clone().filter_map(|mid| {
-                            match distances.get(&(*from, mid)) {
-                                Some(first) => {
-                                    match distances.get(&(mid, to)) {
-                                        Some(second) => Some(first + second),
-                                        None => None
-                                    }
-                                },
-                                None => None
-                            }
-                        }).min();
-                    match dist {
-                        Some(d) => {
-                            distances.insert((*from, *to), d);
-                        },
-                        _ => {}
-                    }
-                }
-            }
-        });
-    }
-
-    distances
-}
-
-fn value(cache: &mut HashMap<(&str, i64, &str), i64>, cave: &str, open_valves: HashSet<&str>, valves: &HashMap<&str, (i64, Vec<&str>)>, mins: i64) -> i64 {
-    println!("calculating value of {cave} at {mins}");
-    let _ = std::io::stdout().flush();
-
-    if mins <= 0 {
+fn value_of_staying_at(
+    min: i64,
+    cave: &str,
+    valves: &HashMap<&str, (i64, Vec<&str>)>,
+    opened: HashSet<&str>,
+) -> i64 {
+    if min <= 0 {
         return 0;
     }
 
-    cache.insert((cave, mins, valves.iter().collect()), 0);
+    let mut opened_with_this_cave = opened.clone();
 
-    let already_opened = open_valves.contains(cave);
+    opened_with_this_cave.insert(cave);
 
-    let (rate, links_to) = &valves[cave];
+    let (r, links_to) = &valves[cave];
 
-    let value_move = links_to.iter().map(|d| value(cache, d, open_valves.clone(), &valves, mins - 1)).max().unwrap();
+    let value_after = links_to
+        .iter()
+        .map(|cave| value_of_moving_to(min - 1, cave, valves, opened_with_this_cave.clone()))
+        .max()
+        .unwrap();
 
-    if already_opened  {
-
-        value_move
-
-    } else {
-        let mut open_valves_open = open_valves.clone();
-
-        open_valves_open.insert(cave);
-
-        let value_open = rate * (mins - 1) + links_to.iter().map(|d| value(cache, d, open_valves_open.clone(), &valves, mins - 2)).max().unwrap();
-
-        std::cmp::max(value_open, value_move)
-
-    }
+    (r * min) + value_after
 }
 
-const TIME: i64 = 30;
+fn value_of_moving_to(
+    min: i64,
+    cave: &str,
+    valves: &HashMap<&str, (i64, Vec<&str>)>,
+    opened: HashSet<&str>,
+) -> i64 {
+    if min <= 0 {
+        return 0;
+    }
+
+    // println!("{} {cave}: ", " ".repeat(((TIME - min) * 4) as usize));
+
+    if opened.contains(cave) {
+        let (_, links_to) = &valves[cave];
+
+        let val = links_to
+            .iter()
+            .map(|cave| value_of_moving_to(min - 1, cave, valves, opened.clone()))
+            .max()
+            .unwrap();
+
+        // println!("{} {val}", " ".repeat(((TIME - min) * 5) as usize));
+
+        val
+    } else {
+        let value_of_staying = value_of_staying_at(min - 1, cave, valves, opened.clone());
+
+        let value_of_leaving = {
+            let (_, links_to) = &valves[cave];
+            links_to
+                .iter()
+                .map(|cave| value_of_moving_to(min - 1, cave, valves, opened.clone()))
+                .max()
+                .unwrap()
+        };
+
+        // println!(
+        //     "{} stay: {value_of_staying}, leave: {value_of_leaving}",
+        //     " ".repeat(((TIME - min) * 5) as usize)
+        // );
+
+        std::cmp::max(value_of_staying, value_of_leaving)
+    }
+}
 
 fn one(input: &str) -> i64 {
     let valves: HashMap<&str, (i64, Vec<&str>)> = input.lines().map(parse).collect();
 
+    valves
+        .iter()
+        .for_each(|(k, (r, links))| println!("{k} {r} {}", links.join(" ")));
+
     let mut cave = "AA";
 
-    let mut visited: HashSet<&str> = HashSet::new();
+    let mut opened = HashSet::new();
 
     let mut pressure_released: i64 = 0;
 
-    let distances = calc_distances(&valves);
+    for min in (1..=TIME).rev() {
+        dbg!(cave, &opened);
 
-    distances.iter().for_each(|((from, to), dist)| println!("{} -> {}: {}", from, to, dist));
+        let next_cave = {
+            let value_of_cave = value_of_staying_at(min - 1, cave, &valves, opened.clone());
 
-    for minuite in 1..=TIME {
-        println!("starting {minuite} in cave {cave}");
+            let (_, links_to) = &valves[cave];
 
-        pressure_released += visited.iter().map(|cave| valves[cave].0).sum::<i64>();
+            let mut highest_value_other: Vec<_> = links_to
+                .iter()
+                .map(|cave| {
+                    let val = value_of_moving_to(min - 1, cave, &valves, opened.clone());
+                    (*cave, val)
+                })
+                .collect();
 
-        // NEXT
-        let (_, links_to) = &valves[cave];
+            highest_value_other.push((cave, value_of_cave));
 
-        let cache = HashMap::new();
+            let (next_cave, next_cave_value) = highest_value_other
+                .iter()
+                .max_by_key(|(_, val)| val)
+                .unwrap();
 
-        let (most_valuable_dest, its_value) =
-                links_to.
-                iter().
-                map(|dest| (dest, value(cache, dest, visited.clone(), &valves, minuite - 1)))
-                .max_by_key(|(_, value)| *value).unwrap();
+            dbg!(next_cave_value);
 
-        let stay_value = value(cache, cave, visited.clone(), &valves, minuite);
+            next_cave.clone()
+        };
 
-        if its_value > stay_value {
-            println!("chosing to move to {most_valuable_dest}");
-            cave = most_valuable_dest;
-        } else {
-            println!("chosing to stay and open {cave}");
-            visited.insert(&cave);
+        if next_cave == cave {
+            // best to stay
+            opened.insert(cave);
         }
+
+        pressure_released += opened
+            .iter()
+            .map(|cave| {
+                let (rate, _) = valves[cave];
+                rate
+            })
+            .sum::<i64>();
+
+        cave = next_cave;
     }
 
     pressure_released
@@ -139,8 +161,9 @@ fn two(input: &str) -> i64 {
 }
 
 fn main() {
-    // println!("{}", one(include_str!("input16.txt")));
+    // println!("{}", one(include_str!("test16-1.txt")));
     println!("{}", one(include_str!("test16.txt")));
+    // println!("{}", one(include_str!("input16.txt")));
     // println!("{}", two(include_str!("input16.txt")));
 }
 
