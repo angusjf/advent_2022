@@ -80,34 +80,47 @@ fn selections<'a>(options: &'a Vec<&'a str>) -> impl Iterator<Item = (&str, Vec<
     })
 }
 
-fn valu(
+fn value_one(
     cave: &str,
     mins: i64,
     valves: &HashMap<&str, (i64, Vec<&str>)>,
     options: Vec<&str>,
     dist: &HashMap<(&str, &str), i64>,
-    indent: usize,
 ) -> i64 {
     selections(&options)
         .filter(|(choice, _)| dist[&(cave, *choice)] < mins)
         .map(|(chosen, rest)| {
-            dbg!(
-                &valves[chosen].0 * (mins - dist[&(cave, chosen)] - 1)
-                    + valu(
-                        chosen,
-                        mins - dist[&(cave, chosen)] - 1,
-                        valves,
-                        rest,
-                        dist,
-                        indent + 1
-                    )
-            )
+            &valves[chosen].0 * (mins - dist[&(cave, chosen)] - 1)
+                + value_one(chosen, mins - dist[&(cave, chosen)] - 1, valves, rest, dist)
         })
         .max()
         .unwrap_or(0)
 }
 
-fn one(input: &str) -> i64 {
+fn value_two(
+    cave: &str,
+    mins: i64,
+    valves: &HashMap<&str, (i64, Vec<&str>)>,
+    options: Vec<&str>,
+    dist: &HashMap<(&str, &str), i64>,
+) -> i64 {
+    selections(&options)
+        .filter(|(choice, _)| dist[&(cave, *choice)] < mins)
+        .map(|(chosen, rest)| {
+            &valves[chosen].0 * (mins - dist[&(cave, chosen)] - 1)
+                + value_two(
+                    chosen,
+                    mins - dist[&(cave, chosen)] - 1,
+                    valves,
+                    rest.clone(),
+                    dist,
+                )
+        })
+        .max()
+        .unwrap_or(value_one("AA", mins, valves, options, dist))
+}
+
+fn two(input: &str) -> i64 {
     let valves: HashMap<&str, (i64, Vec<&str>)> = input.lines().map(parse).collect();
 
     let dist = calc_distances(&valves);
@@ -115,7 +128,7 @@ fn one(input: &str) -> i64 {
     dbg!(&valves);
     dbg!(&dist);
 
-    valu(
+    dbg!(value_one(
         "AA",
         30,
         &valves,
@@ -125,10 +138,21 @@ fn one(input: &str) -> i64 {
             .map(|(x, _)| *x)
             .collect(),
         &dist,
-        0,
+    ));
+
+    value_two(
+        "AA",
+        26,
+        &valves,
+        valves
+            .iter()
+            .filter(|(_, (r, _))| *r > 0)
+            .map(|(x, _)| *x)
+            .collect(),
+        &dist,
     )
 }
 
 fn main() {
-    println!("{}", one(include_str!("input16.txt")));
+    println!("{}", two(include_str!("test16.txt")));
 }
