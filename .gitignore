@@ -3,3 +3,4 @@
 /haskell/*
 !/haskell/*.hs
 .DS_Store
+*.txt
