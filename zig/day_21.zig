@@ -79,7 +79,7 @@ fn find_humn(monkeys: std.StringHashMapUnmanaged(Monkey), target: i64, monkey: [
                 .sub =>
                 // a - x = target
                 // x - b = target
-                if (a) |_| -(target - a.?) else target + b.?,
+                if (a) |_| target + a.? else target + b.?,
                 .mul =>
                 // x * b = target
                 // a * x = target
@@ -105,21 +105,15 @@ fn what_number(monkeys: std.StringHashMapUnmanaged(Monkey), monkey: []const u8) 
             return n;
         },
         .expr => |expr| {
-            const a_or_null = what_number(monkeys, expr.a);
+            const a = what_number(monkeys, expr.a) orelse return null;
+            const b = what_number(monkeys, expr.b) orelse return null;
 
-            const b_or_null = what_number(monkeys, expr.b);
-
-            if (a_or_null) |a| {
-                if (b_or_null) |b| {
-                    return switch (expr.op) {
-                        .add => a + b,
-                        .sub => a - b,
-                        .mul => a * b,
-                        .div => @divExact(a, b),
-                    };
-                }
-            }
-            return null;
+            return switch (expr.op) {
+                .add => a + b,
+                .sub => a - b,
+                .mul => a * b,
+                .div => @divExact(a, b),
+            };
         },
     }
 }
